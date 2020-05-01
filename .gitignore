@@ -1,1 +1,4 @@
 *.pkl
+*.ipynb
+*.ipynb_checkpoints
+

@@ -112,7 +112,9 @@ class Metamovie(Dataset):
             self.state = 'warm_state'
         else:
             if test_way is not None:
-                if test_way == 'new_user':
+                if test_way == 'old':
+                    self.state = 'warm_state'
+                elif test_way == 'new_user':
                     self.state = 'user_cold_state'
                 elif test_way == 'new_item':
                     self.state = 'item_cold_state'

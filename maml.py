@@ -254,13 +254,14 @@ if __name__ == '__main__':
     if not args.test:
         run(args, num_workers=1, log_interval=100, verbose=True, save_path=None)
     else:
+        utils.set_seed(args.seed)
         code_root = os.path.dirname(os.path.realpath(__file__))
         mode_path = utils.get_path_from_args(args)
         mode_path = '9b8290dd3f63cbafcd141ba21282c783'
         path = '{}/{}_result_files/'.format(code_root, args.task) + mode_path
         logger = utils.load_obj(path)
         model = logger.valid_model[-1]
-        dataloader_test = DataLoader(Metamovie(args,partition='test',test_way='new_item_user'),
+        dataloader_test = DataLoader(Metamovie(args,partition='test',test_way='old'),#old, new_user, new_item, new_item_user
                                      batch_size=1,num_workers=args.num_workers)
         evaluate_test(args, model, dataloader_test)
     # --- settings ---
