@@ -1,15 +1,14 @@
 import os
 import pickle
-from PIL import Image
 import numpy as np
 import torch
 from torch.utils.data import Dataset
 import random
-import  re
 import datetime
 import pandas as pd
 import json
 from tqdm import tqdm
+
 
 class movielens_1m(object):
     def __init__(self):
@@ -22,11 +21,11 @@ class movielens_1m(object):
         item_data_path = "{}/movies_extrainfos.dat".format(path)
 
         profile_data = pd.read_csv(
-            profile_data_path, names=['user_id', 'gender', 'age', 'occupation_code', 'zip'], 
+            profile_data_path, names=['user_id', 'gender', 'age', 'occupation_code', 'zip'],
             sep="::", engine='python'
         )
         item_data = pd.read_csv(
-            item_data_path, names=['movie_id', 'title', 'year', 'rate', 'released', 'genre', 'director', 'writer', 'actors', 'plot', 'poster'], 
+            item_data_path, names=['movie_id', 'title', 'year', 'rate', 'released', 'genre', 'director', 'writer', 'actors', 'plot', 'poster'],
             sep="::", engine='python', encoding="utf-8"
         )
         score_data = pd.read_csv(
@@ -37,7 +36,8 @@ class movielens_1m(object):
         score_data['time'] = score_data["timestamp"].map(lambda x: datetime.datetime.fromtimestamp(x))
         score_data = score_data.drop(["timestamp"], axis=1)
         return profile_data, item_data, score_data
-    
+
+
 def item_converting(row, rate_list, genre_list, director_list, actor_list):
     rate_idx = torch.tensor([[rate_list.index(str(row['rate']))]]).long()
     genre_idx = torch.zeros(1, 25).long()
@@ -55,7 +55,7 @@ def item_converting(row, rate_list, genre_list, director_list, actor_list):
     return torch.cat((rate_idx, genre_idx, director_idx, actor_idx), 1)
 
 
-def user_converting(row, gender_list, age_list, occupation_list, zipcode_list): 
+def user_converting(row, gender_list, age_list, occupation_list, zipcode_list):
     gender_idx = torch.tensor([[gender_list.index(str(row['gender']))]]).long()
     age_idx = torch.tensor([[age_list.index(str(row['age']))]]).long()
     occupation_idx = torch.tensor([[occupation_list.index(str(row['occupation_code']))]]).long()
@@ -70,13 +70,14 @@ def load_list(fname):
             list_.append(line.strip())
     return list_
 
+
 class Metamovie(Dataset):
     def __init__(self, args, partition='train', test_way=None, path=None):
         super(Metamovie, self).__init__()
         #self.dataset_path = args.data_root
         self.partition = partition
         #self.pretrain = pretrain
-        
+
         self.dataset_path = args.data_root
         dataset_path = self.dataset_path
         rate_list = load_list("{}/m_rate.txt".format(dataset_path))
@@ -89,7 +90,7 @@ class Metamovie(Dataset):
         zipcode_list = load_list("{}/m_zipcode.txt".format(dataset_path))
 
         self.dataset = movielens_1m()
-        
+
         master_path = self.dataset_path
         if not os.path.exists("{}/m_movie_dict.pkl".format(master_path)):
             self.movie_dict = {}
@@ -124,8 +125,7 @@ class Metamovie(Dataset):
         with open("{}/{}.json".format(dataset_path, self.state), encoding="utf-8") as f:
             self.dataset_split = json.loads(f.read())
         with open("{}/{}_y.json".format(dataset_path, self.state), encoding="utf-8") as f:
-            self.dataset_split_y = json.loads(f.read())            
-        length = len(self.dataset_split.keys())
+            self.dataset_split_y = json.loads(f.read())
         self.final_index = []
         for _, user_id in tqdm(enumerate(list(self.dataset_split.keys()))):
             u_id = int(user_id)
@@ -135,7 +135,6 @@ class Metamovie(Dataset):
                 continue
             else:
                 self.final_index.append(user_id)
-         
 
     def __getitem__(self, item):
         user_id = self.final_index[item]
@@ -145,7 +144,7 @@ class Metamovie(Dataset):
         random.shuffle(indices)
         tmp_x = np.array(self.dataset_split[str(u_id)])
         tmp_y = np.array(self.dataset_split_y[str(u_id)])
-        
+
         support_x_app = None
         for m_id in tmp_x[indices[:-10]]:
             m_id = int(m_id)
@@ -166,6 +165,6 @@ class Metamovie(Dataset):
         support_y_app = torch.FloatTensor(tmp_y[indices[:-10]])
         query_y_app = torch.FloatTensor(tmp_y[indices[-10:]])
         return support_x_app, support_y_app.view(-1,1), query_x_app, query_y_app.view(-1,1)
-        
+
     def __len__(self):
         return len(self.final_index)

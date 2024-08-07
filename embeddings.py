@@ -1,6 +1,4 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 
 class item(torch.nn.Module):
@@ -13,22 +11,22 @@ class item(torch.nn.Module):
         self.embedding_dim = config.embedding_dim
 
         self.embedding_rate = torch.nn.Embedding(
-            num_embeddings=self.num_rate, 
+            num_embeddings=self.num_rate,
             embedding_dim=self.embedding_dim
         )
-        
+
         self.embedding_genre = torch.nn.Linear(
             in_features=self.num_genre,
             out_features=self.embedding_dim,
             bias=False
         )
-        
+
         self.embedding_director = torch.nn.Linear(
             in_features=self.num_director,
             out_features=self.embedding_dim,
             bias=False
         )
-        
+
         self.embedding_actor = torch.nn.Linear(
             in_features=self.num_actor,
             out_features=self.embedding_dim,
